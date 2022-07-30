@@ -17,5 +17,5 @@ def convert_to_onnx(config, checkpoint=None, device='cuda:0', export_path='.', v
 
 if  __name__ == '__main__':
     config = find_config('centerpoint/centerpoint_03pillar_kitti_lum.py')
-    checkpoint = '/home/mark/checkpoints/centrpoint/centerpoint_lum_iris.pth'
+    checkpoint = os.path.expandvars('/home/$USER/checkpoints/centrpoint/centerpoint_lum_iris.pth')
     convert_to_onnx(config, checkpoint=checkpoint, verbose=True)
