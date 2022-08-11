@@ -66,5 +66,5 @@ def test_trt_engine(trt_engine_pathname):
 if  __name__ == '__main__':
     # Depending on GPU utilization TensorRT might not have enough memory to build and execute engine in the same run.
     # If you get CUDA memory related error try to build and run in separate steps
-    build_trt_engine('CenterPoint.onnx')
+    #build_trt_engine('CenterPoint.onnx')
     test_trt_engine('CenterPoint.trt')
