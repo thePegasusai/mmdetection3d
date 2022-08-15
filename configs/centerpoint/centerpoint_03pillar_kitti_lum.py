@@ -381,5 +381,5 @@ mp_start_method = 'fork'
 total_epochs = 210
 gpu_ids = range(0, 8)
 conversion = dict(
-    trace_input_shapes = [(16000, 20, 4), (16000,), (16000, 4)]
+    trace_input_shapes = [(16000, 20, 4), (16000,), (16000, 4)],
 )

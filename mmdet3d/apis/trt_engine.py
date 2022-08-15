@@ -4,10 +4,26 @@ import tensorrt as trt
 import pycuda.autoinit
 import pycuda.driver as cuda
 
+additional_outputs = dict(
+        voxel_size=[0.2, 0.2, 16],
+        pc_range=[0, -55.2],
+        score_threshold=[0.1],
+        outsize_factor=[4],
+        post_center_limit_range=[-10, -65.2, -13, 138, 65.2, 13],
+        pre_max_size=[1000],
+        post_max_size=[83],
+        nms_thr=[0.2],
+    )
+
 
 def build_trt_engine(onnx_export_pathname):
     print('TensorRT version: ', trt.__version__)
     trt_logger = trt.Logger(trt.Logger.INFO)
+    def add_const_output(network, output_name, const_value):
+        const_layer = network.add_constant(const_value.shape, const_value)
+        const_layer.name = output_name
+        const_layer.get_output(0).name = output_name
+        network.mark_output(tensor=const_layer.get_output(0))
 
     with trt.Builder(trt_logger) as builder:
         builder.max_batch_size = 1
@@ -26,6 +42,9 @@ def build_trt_engine(onnx_export_pathname):
                     for error in range(parser.num_errors):
                         print(parser.get_error(error))
                     raise ValueError(f'Failed to parse ONNX to TensorRT network')
+
+                for key, val in additional_outputs.items():
+                    add_const_output(network, key, np.array(val).astype(np.float32))
 
                 # build engine
                 network.name = os.path.basename(onnx_export_pathname).split('.')[0]
@@ -50,8 +69,9 @@ def test_trt_engine(trt_engine_pathname):
         for idx in range(cuda_engine.num_bindings):
             binding_shape = context.get_binding_shape(idx)
             binding_dtype = cuda_engine.get_binding_dtype(idx)
+            binding_name = cuda_engine.get_binding_name(idx)
             is_input = cuda_engine.binding_is_input(idx)
-            print(f'binding {idx}: {binding_shape}, {binding_dtype}, {"input" if is_input else "output"}')
+            print(f'binding {idx}: {binding_name}{binding_shape}, {binding_dtype}, {"input" if is_input else "output"}')
             if is_input:
                 gpu_mem = cuda.to_device(np.ndarray(binding_shape, dtype=np.float32))
             else:
