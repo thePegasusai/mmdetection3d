@@ -6,7 +6,7 @@ import pycuda.driver as cuda
 
 additional_outputs = dict(
         voxel_size=[0.2, 0.2, 16],
-        pc_range=[0, -55.2],
+        point_cloud_range=[0, -55.2, -15, 128, 55.2, 15],
         score_threshold=[0.1],
         outsize_factor=[4],
         post_center_limit_range=[-10, -65.2, -13, 138, 65.2, 13],
