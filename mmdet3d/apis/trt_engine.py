@@ -1,8 +1,14 @@
+import sys
 import os.path
 import numpy as np
 import tensorrt as trt
 import pycuda.autoinit
 import pycuda.driver as cuda
+from pathlib import Path
+
+path_to_root = str(Path(__file__).resolve().parents[2])
+sys.path.append(path_to_root)
+
 from configs.centerpoint import centerpoint_03pillar_kitti_lum as centerpoint_config
 
 CLASS_NAME_TO_ONTOLOGY = {'Car': 11000, 'Pedestrian': 16001, 'Cyclist': 16004, 'Large_vehicle': 11001}
