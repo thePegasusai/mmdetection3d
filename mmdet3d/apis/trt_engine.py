@@ -3,22 +3,31 @@ import numpy as np
 import tensorrt as trt
 import pycuda.autoinit
 import pycuda.driver as cuda
+from configs.centerpoint import centerpoint_03pillar_kitti_lum as centerpoint_config
+
+CLASS_NAME_TO_ONTOLOGY = {'Car': 11000, 'Pedestrian': 16001, 'Cyclist': 16004, 'Large_vehicle': 11001}
 
 additional_outputs = dict(
-        voxel_size=[0.2, 0.2, 16],
-        point_cloud_range=[0, -55.2, -15, 128, 55.2, 15],
-        score_threshold=[0.1],
-        outsize_factor=[4],
-        post_center_limit_range=[-10, -65.2, -13, 138, 65.2, 13],
-        pre_max_size=[1000],
-        post_max_size=[83],
-        nms_thr=[0.2],
-    )
+    voxel_size=centerpoint_config.voxel_size_lum,
+    point_cloud_range=centerpoint_config.point_cloud_range_kitti_lum,
+    score_threshold=[centerpoint_config.model['pts_bbox_head']['bbox_coder']['score_threshold']],
+    outsize_factor=[centerpoint_config.new_outsize_factor],
+    post_center_limit_range=centerpoint_config.point_cloud_range_kitti_lum_post_center,
+    pre_max_size=[centerpoint_config.model['test_cfg']['pts']['pre_max_size']],
+    post_max_size=[centerpoint_config.model['test_cfg']['pts']['post_max_size']],
+    nms_thr=[centerpoint_config.model['test_cfg']['pts']['nms_thr']],
+)
+
+# for each task add the class ontology ex: task0: [11000, 11005] etc  
+for task_idx, task in enumerate(centerpoint_config.model['pts_bbox_head']['tasks']):
+    additional_outputs['task' + str(task_idx)] = [CLASS_NAME_TO_ONTOLOGY[class_name] for class_name in
+                                                  task['class_names']]
 
 
 def build_trt_engine(onnx_export_pathname):
     print('TensorRT version: ', trt.__version__)
     trt_logger = trt.Logger(trt.Logger.INFO)
+
     def add_const_output(network, output_name, const_value):
         const_layer = network.add_constant(const_value.shape, const_value)
         const_layer.name = output_name
@@ -83,8 +92,8 @@ def test_trt_engine(trt_engine_pathname):
         print('execute_v2() rc:', rc)
 
 
-if  __name__ == '__main__':
+if __name__ == '__main__':
     # Depending on GPU utilization TensorRT might not have enough memory to build and execute engine in the same run.
     # If you get CUDA memory related error try to build and run in separate steps
-    #build_trt_engine('CenterPoint.onnx')
+    # build_trt_engine('CenterPoint.onnx')
     test_trt_engine('CenterPoint.trt')
